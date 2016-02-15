@@ -8,22 +8,25 @@
 #include <QLabel>
 #include <QTimer>
 
+FILE *input;
+
 core::core(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::core)
 {
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer->setInterval(1);
+    timer->setInterval(0);
     timer->start(1000);
     std::srand(time(NULL));
     ui->setupUi(this);
     ui->gridLayout->setSpacing(0);
 
+    input = fopen("../multiagent-visual/input", "r");
 
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-            data[i][j] = 0;//(2 * i * i + 2 * j * j) % 256;
+            data[i][j] = 0;
         }
     }
 
@@ -74,13 +77,17 @@ void core::updateData(int x, int y, int val) {
 
 void core::paintEvent(QPaintEvent *)
 {
-    int x = std::rand() % 10;
-    int y = std::rand() % 10;
-    int diff = -25 + std::rand() % 100;
-    int val = data[x][y] + diff;
+    int val;
+    int n;
+
+    fscanf(input, "%d %d", &n, &val);
+
+    int x = n / 10;
+    int y = n % 10;
+
+    val = data[x][y] + val;
     if (val < 0)
         val = 0;
     val %= 255;
     updateData(x, y, val);
 }
-
