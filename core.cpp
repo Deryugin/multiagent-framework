@@ -45,8 +45,8 @@ void core::initData(void) {
             QString shade_arg = QString::fromStdString(shade);
             QString styleSheet = "QLabel { background-color : rgb" + shade_arg + "; color : rgb" + shade_arg + "; }";
             label->setStyleSheet(styleSheet);
-            label->setFixedHeight(30);
-            label->setFixedWidth(30);
+            label->setFixedHeight(50);
+            label->setFixedWidth(50);
             label->setMargin(-1);
             ui->gridLayout->addWidget(label, i, j);
         }
@@ -90,5 +90,5 @@ void core::paintEvent(QPaintEvent *)
 
     updateData(x, y, val);
 
-    usleep(1000);
+    usleep(4000);
 }
