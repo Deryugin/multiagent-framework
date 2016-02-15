@@ -16,7 +16,9 @@ public:
     ~core();
 
 private:
+    int data[10][10];
     Ui::core *ui;
+    void redrawData(void);
 };
 
 #endif // CORE_H
