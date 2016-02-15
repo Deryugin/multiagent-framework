@@ -7,6 +7,7 @@
 #include <random>
 #include <QLabel>
 #include <QTimer>
+#include <unistd.h>
 
 FILE *input;
 
@@ -14,11 +15,7 @@ core::core(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::core)
 {
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer->setInterval(0);
-    timer->start(1000);
-    std::srand(time(NULL));
+
     ui->setupUi(this);
     ui->gridLayout->setSpacing(0);
 
@@ -72,7 +69,13 @@ void core::redrawData(void) {
 
 void core::updateData(int x, int y, int val) {
     data[x][y] = val;
-    core::redrawData();
+    QLayoutItem *label = ui->gridLayout->itemAt(x * 10 + y);
+    std::ostringstream ss;
+    ss << data[x][y];
+    std::string shade = "(" + ss.str() + ", " + ss.str() + ", " + ss.str() + ")";
+    QString shade_arg = QString::fromStdString(shade);
+    QString styleSheet = "QLabel { background-color : rgb" + shade_arg + "; color : rgb" + shade_arg + "; }";
+    label->widget()->setStyleSheet(styleSheet);
 }
 
 void core::paintEvent(QPaintEvent *)
@@ -85,9 +88,7 @@ void core::paintEvent(QPaintEvent *)
     int x = n / 10;
     int y = n % 10;
 
-    val = data[x][y] + val;
-    if (val < 0)
-        val = 0;
-    val %= 255;
     updateData(x, y, val);
+
+    usleep(1000);
 }
