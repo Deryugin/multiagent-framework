@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - teapot buffer geometry</title>
+		<title>Plane air pressure visualisation</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -30,7 +30,6 @@
 		</style>
 	</head>
 	<body>
-
 		<script src="build/three.js"></script>
 
 		<script src="examples/js/controls/OrbitControls.js"></script>
@@ -39,89 +38,39 @@
 
 
 		<script>
-
-			////////////////////////////////////////////////////////////////////////////////
-			// Utah/Newell Teapot demo
-			////////////////////////////////////////////////////////////////////////////////
-			/*global THREE, Detector, container, dat, window */
-
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 			var camera, scene, renderer;
 			var cameraControls;
-			var effectController;
-			var teapotSize = 400;
 			var ambientLight, light;
-			var skybox;
 
-			var tess = -1;	// force initialization
-			var bBottom ;
-			var bLid;
-			var bBody;
-			var bFitLid;
-			var bNonBlinn;
-			var shading;
-			//var wireMaterial, flatMaterial, gouraudMaterial, phongMaterial, texturedMaterial, reflectiveMaterial;
-
-			//var textureCube;
-
-
-
-				// MATERIALS
-				/*var materialColor = new THREE.Color();
-				materialColor.setRGB( 1.0, 1.0, 1.0 );
-
-				wireMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, wireframe: true } ) ;
-
-				flatMaterial = new THREE.MeshPhongMaterial( { color: materialColor, specular: 0x0, shading: THREE.FlatShading, side: THREE.DoubleSide } );
-
-				gouraudMaterial = new THREE.MeshLambertMaterial( { color: materialColor, side: THREE.DoubleSide } );
-
-				phongMaterial = new THREE.MeshPhongMaterial( { color: materialColor, shading: THREE.SmoothShading, side: THREE.DoubleSide } );
-
-				//texturedMaterial = new THREE.MeshPhongMaterial( { color: materialColor, map: textureMap, shading: THREE.SmoothShading, side: THREE.DoubleSide } );
-
-				//reflectiveMaterial = new THREE.MeshPhongMaterial( { color: materialColor, envMap: textureCube, shading: THREE.SmoothShading, side: THREE.DoubleSide } );
-*/
-
-			// allocate these just once
-			var diffuseColor = new THREE.Color();
-			var specularColor = new THREE.Color();
-			var txtFile = new XMLHttpRequest();
 			var raw_lines = new Array(1024 * 16 * 16);
 			var line_ind = 0;
+
 			for (i = 0; i < 1024 * 16 * 16; i++)
 				raw_lines[i] = Math.floor(Math.random() * 256);
-			/*txtFile.open("GET", "file:///home/dde/multiagent-visual/input", true);
-				txtFile.onreadystatechange = function()
-				{
-				 
-				      allText = txtFile.responseText; 
-				      raw_lines = txtFile.responseText.split("\n");
-				}
-				//txtFile.send(null);*/
-			
+
 			var scale = 0.25;
-			
+
 			var feather_w = 60 * scale;
 			var cols = 15;
 			var rows = 6;
 			var geometry = new THREE.Geometry();
-			
-				
+
 			var planeMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: THREE.VertexColors, shading: THREE.FlatShading} );
 			var mesh = new THREE.Mesh( geometry, planeMaterial, shading === "glossy" );  // create an object
-			
+
 			var cameraTarget = new THREE.Mesh( new THREE.CubeGeometry( feather_w * (cols - 1) / 2, -1000, -100));
+			var sock = new WebSocket("ws://localhost:9876/");
+
 			init();
-			
+
 			render();
 
 			var lineMaterial = new THREE.LineBasicMaterial({
 				color: 0x000000
 			});
 
-			var s = new WebSocket("ws://localhost:9876/");
 
 			function init() {
 
@@ -133,17 +82,17 @@
 
 				// CAMERA
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 80000 );
-				
-				
-				
+
+
+
 				camera.position.set( feather_w * cols / 2, 200, 200 );
-				
-				
-				
+
+
+
 				cameraControls = new THREE.OrbitControls(camera);
 				cameraControls.target.set( feather_w * cols / 2, 0, -100 * scale );
-				
-				//camera.updateProjectionMatrix()	
+
+				//camera.updateProjectionMatrix()
 				// LIGHTS
 				ambientLight = new THREE.AmbientLight( 0x333333 );	// 0.2
 
@@ -162,39 +111,13 @@
 				// EVENTS
 				window.addEventListener( 'resize', onWindowResize, false );
 
-				// CONTROLS
-				//cameraControls = new THREE.OrbitControls(camera);//, renderer.domElement );
-				//cameraControls = new THREE.OrbitControls(camera);
-				//cameraControls.target.set( feather_w * cols / 2, 0, -100 * scale );
-				//cameraControls.reset();
-				//cameraControls.addEventListener( 'change', render );
-				
-				 /*
-				// TEXTURE MAP
-				var textureMap = new THREE.TextureLoader().load( 'examples/textures/UV_Grid_Sm.jpg' );
-				textureMap.wrapS = textureMap.wrapT = THREE.RepeatWrapping;
-				textureMap.anisotropy = 16;
-
-				// REFLECTION MAP
-				var path = "examples/textures/cube/skybox/";
-				var urls = [
-					path + "px.jpg", path + "nx.jpg",
-					path + "py.jpg", path + "ny.jpg",
-					path + "pz.jpg", path + "nz.jpg"
-				];
-
-				textureCube = new THREE.CubeTextureLoader().load( urls );
-*/
 				// scene itself
 				scene = new THREE.Scene();
 
 				scene.add( ambientLight );
 				scene.add( light );
-				
+
 				/* PLANE INIT */
-				
-				
-				
 				/* side of the wing */
 				geometry.vertices.push(
 					new THREE.Vector3( 0, 0, 0),
@@ -210,10 +133,10 @@
 				geometry.faces[1].color.setHex( 0x333333 )
 				geometry.faces.push( new THREE.Face3( 0, 3, 4) )
 				geometry.faces[2].color.setHex( 0x333333 )
-		
+
 				var face_ind = 3;
-				
-				
+
+
 				for (i = 1; i < cols; i++) {
 					geometry.vertices.push(
 						new THREE.Vector3( i * feather_w, 0, 0),
@@ -222,31 +145,30 @@
 						new THREE.Vector3( i * feather_w, 25 * scale, -165 * scale ),
 						new THREE.Vector3( i * feather_w, 00, -250 * scale )
 					);
-					
-					
+
+
 					geometry.faces.push( new THREE.Face3( i * 5, (i - 1) * 5 + 1, i * 5 + 1) )
 					geometry.faces.push( new THREE.Face3( i * 5, (i - 1) * 5 + 1, (i - 1) * 5) )
-					
+
 					geometry.faces.push( new THREE.Face3( i * 5 + 1, (i - 1) * 5 + 1+ 1, i * 5 + 1+ 1) )
 					geometry.faces.push( new THREE.Face3( i * 5 + 1, (i - 1) * 5 + 1+ 1, (i - 1) * 5+ 1) )
-					
+
 					geometry.faces.push( new THREE.Face3( i * 5+ 2, (i - 1) * 5 + 1+ 2, i * 5 + 1+ 2) )
 					geometry.faces.push( new THREE.Face3( i * 5+ 2, (i - 1) * 5 + 1+ 2, (i - 1) * 5+ 2) )
-					
+
 					geometry.faces.push( new THREE.Face3( i * 5+ 3, (i - 1) * 5 + 1+ 3, i * 5 + 1+ 3) )
 					geometry.faces.push( new THREE.Face3( i * 5+ 3, (i - 1) * 5 + 1+ 3, (i - 1) * 5+ 3) )
 
 				}
-				
-				s.onopen = function(e) { /* alert("opened"); */ }
-				s.onclose = function(e) { /* alert("closed"); */ }
-				s.onmessage = function(e) {
+
+				sock.onopen = function(e) { /* alert("opened"); */ }
+				sock.onclose = function(e) { /* alert("closed"); */ }
+				sock.onmessage = function(e) {
 					alert("got: " + e.data);
 					/* Update fields */
-					
+
 				}
 
-				
 				/* side of the wing */
 				geometry.vertices.push(
 					new THREE.Vector3( (cols - 1) * feather_w, 0, 0),
@@ -255,8 +177,6 @@
 					new THREE.Vector3( (cols - 1) * feather_w, 25 * scale, -165 * scale ),
 					new THREE.Vector3( (cols - 1) * feather_w, 00 * scale, -250 * scale )
 				);
-				
-				
 
 				geometry.faces.push( new THREE.Face3( 5 * cols, 5 * cols + 1, 5 * cols + 2) )
 				geometry.faces[2 + (cols - 1) * 8 + 1].color.setHex( 0x333333 )
@@ -264,7 +184,7 @@
 				geometry.faces[2 + (cols - 1) * 8 + 2].color.setHex( 0x333333 )
 				geometry.faces.push( new THREE.Face3( 5 * cols, 5 * cols + 3, 5 * cols + 4) )
 				geometry.faces[2 + (cols - 1) * 8 + 3].color.setHex( 0x333333 )
-				
+
 				/* Down side */
 				geometry.vertices.push(
 					new THREE.Vector3( 0, 0, 0),
@@ -272,23 +192,14 @@
 					new THREE.Vector3( (cols - 1) * feather_w, 0, -250 * scale),
 					new THREE.Vector3( (cols - 1) * feather_w, 0, 0)
 				);
-				
+
 				geometry.faces.push( new THREE.Face3( 5 * cols + 5, 5 * cols + 1+ 5, 5 * cols + 2+ 5) )
 				geometry.faces[2 + (cols - 1) * 8 + 4].color.setHex( 0x222222 )
 				geometry.faces.push( new THREE.Face3( 5 * cols+ 5, 5 * cols + 2+ 5, 5 * cols + 3+ 5) )
 				geometry.faces[2 + (cols - 1) * 8 + 5].color.setHex( 0x222222 )
-				
-				
-				//geometry.computeFaceNormals 
-				//geometry.mergeVertices()
-				
-				
-				
-				
 			}
 
 			// EVENT HANDLERS
-
 			function onWindowResize() {
 
 				var canvasWidth = window.innerWidth;
@@ -303,101 +214,94 @@
 
 			}
 
-
 			function render() {
 				var time = Date.now();
-				
-				
+
 				requestAnimationFrame( render );
 				redrawPlane()
-				renderer.render( scene, camera );	
-				
-				
+				renderer.render( scene, camera );
 			};
-			
+
 			function val_to_color(c) {
 				c = c % 256;
 				var d
 				if (c < 127) {
-					d = c * 2;	
+					d = c * 2;
 					return d + (0xff - d) * 0x100;
 				}
-				
+
 				d = (c - 128) * 2;
 				if (d >= 256)
 					d = 255;
 				return d * 0x100000 + (0xff - d) * 0x100;
 			}
-			
+
 			var face_ind
 			var color
 			var time_last = Date.now();
 			var time
 			function redrawPlane() {
-				e.send
-
-			
 				face_ind = 3;
 
 				geometry.faces[0].color.setHex( 0x333333 )
 				geometry.faces[1].color.setHex( 0x333333 )
 				geometry.faces[2].color.setHex( 0x333333 )
-				
+
 				time = Date.now();
-				
+
 				if (line_ind > 15000)
 					line_ind = 0;
 				if (time > time_last + 500) {
 					time_last = time
 					for (i = 1; i < cols; i++) {
 						line_ind++;
-					
+
 						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
 						color = val_to_color(color)
-					
+
 						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
-				
-						geometry.faces[face_ind].color.setHex(color)	
+
+						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
-					
+
 						line_ind++;
-					
+
 						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
 						color = val_to_color(color)
-					
+
 						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
-					
+
 						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
-					
+
 						line_ind++;
-					
+
 						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
 						color = val_to_color(color)
-					
+
 						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
-					
-						geometry.faces[face_ind].color.setHex(color)	
+
+						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
-					
+
 						line_ind++;
-					
+
 						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
 						color = val_to_color(color)
-				
+
 						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
-					
-						geometry.faces[face_ind].color.setHex(color)	
+
+						geometry.faces[face_ind].color.setHex(color)
 						face_ind++
 
 					}
-					geometry.colorsNeedUpdate = true;				
+					geometry.colorsNeedUpdate = true;
 				}
-			
+
 				scene.add( mesh );
 			}
 
