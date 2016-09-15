@@ -76,6 +76,8 @@
 
 
 			function init() {
+				var x_offset =  (cols - 1) * feather_w / 2;
+				var z_offset = -250 * scale / 2;
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
@@ -85,9 +87,10 @@
 
 				// CAMERA
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 80000 );
-				camera.position.set( feather_w * cols / 2, 200, 200 );
+				camera.position.set( feather_w * cols / 2 * 2, 120, 200 );
 				cameraControls = new THREE.OrbitControls(camera);
-				cameraControls.target.set( feather_w * cols / 2, 0, -100 * scale );
+				//cameraControls.target.set( feather_w * cols / 2, 0, -250 * scale / 2);
+				cameraControls.addEventListener( 'change', render );
 
 				// LIGHTS
 				ambientLight = new THREE.AmbientLight( 0x333333 );	// 0.2
@@ -97,10 +100,10 @@
 
 				// RENDERER
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setClearColor( 0xAAAAAA );
+				renderer.setClearColor( 0x111111 );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( canvasWidth, canvasHeight );
-				renderer.gammaInput = true;
+				//renderer.onWindowResize()
 				renderer.gammaOutput = true;
 				container.appendChild( renderer.domElement );
 
@@ -121,18 +124,18 @@
 
 				/* side of the wing */
 				geometry.vertices.push(
-					new THREE.Vector3( 0, 0, 0),
-					new THREE.Vector3( 0, 30 * scale, -50 * scale ),
-					new THREE.Vector3( 0, 35 * scale, -100 * scale ),
-					new THREE.Vector3( 0, 25 * scale, -165 * scale ),
-					new THREE.Vector3( 0, 00 * scale, -250 * scale )
+					new THREE.Vector3( -x_offset, 0, 0 - z_offset),
+					new THREE.Vector3( 0 - x_offset, 30 * scale, -50 * scale - z_offset),
+					new THREE.Vector3( 0 - x_offset, 35 * scale, -100 * scale - z_offset ),
+					new THREE.Vector3( 0 - x_offset, 25 * scale, -165 * scale - z_offset ),
+					new THREE.Vector3( 0 - x_offset, 00 * scale, -250 * scale - z_offset )
 				);
 
-				geometry.faces.push( new THREE.Face3( 0, 1, 2) )
+				geometry.faces.push( new THREE.Face3( 0 , 1, 2) )
 				geometry.faces[0].color.setHex( 0x333333 )
-				geometry.faces.push( new THREE.Face3( 0, 2, 3) )
+				geometry.faces.push( new THREE.Face3( 0 , 2, 3) )
 				geometry.faces[1].color.setHex( 0x333333 )
-				geometry.faces.push( new THREE.Face3( 0, 3, 4) )
+				geometry.faces.push( new THREE.Face3( 0 , 3, 4) )
 				geometry.faces[2].color.setHex( 0x333333 )
 
 				var face_ind = 3;
@@ -140,11 +143,11 @@
 
 				for (i = 1; i < cols; i++) {
 					geometry.vertices.push(
-						new THREE.Vector3( i * feather_w, 0, 0),
-						new THREE.Vector3( i * feather_w, 30 * scale, -50 * scale ),
-						new THREE.Vector3( i * feather_w, 35 * scale, -100 * scale ),
-						new THREE.Vector3( i * feather_w, 25 * scale, -165 * scale ),
-						new THREE.Vector3( i * feather_w, 00, -250 * scale )
+						new THREE.Vector3( i * feather_w - x_offset, 0, 0 - z_offset),
+						new THREE.Vector3( i * feather_w - x_offset, 30 * scale, -50 * scale - z_offset ),
+						new THREE.Vector3( i * feather_w - x_offset, 35 * scale, -100 * scale - z_offset ),
+						new THREE.Vector3( i * feather_w - x_offset, 25 * scale, -165 * scale - z_offset ),
+						new THREE.Vector3( i * feather_w - x_offset, 00, -250 * scale - z_offset )
 					);
 
 
@@ -174,11 +177,11 @@
 
 				/* side of the wing */
 				geometry.vertices.push(
-					new THREE.Vector3( (cols - 1) * feather_w, 0, 0),
-					new THREE.Vector3( (cols - 1) * feather_w, 30 * scale, -50 * scale ),
-					new THREE.Vector3( (cols - 1) * feather_w, 35 * scale, -100 * scale ),
-					new THREE.Vector3( (cols - 1) * feather_w, 25 * scale, -165 * scale ),
-					new THREE.Vector3( (cols - 1) * feather_w, 00 * scale, -250 * scale )
+					new THREE.Vector3( (cols - 1) * feather_w - x_offset, 0, 0 - z_offset),
+					new THREE.Vector3( (cols - 1) * feather_w - x_offset, 30 * scale, -50 * scale - z_offset ),
+					new THREE.Vector3( (cols - 1) * feather_w - x_offset, 35 * scale, -100 * scale - z_offset ),
+					new THREE.Vector3( (cols - 1) * feather_w - x_offset, 25 * scale, -165 * scale - z_offset ),
+					new THREE.Vector3( (cols - 1) * feather_w - x_offset, 00 * scale, -250 * scale - z_offset )
 				);
 
 				geometry.faces.push( new THREE.Face3( 5 * cols, 5 * cols + 1, 5 * cols + 2) )
@@ -190,16 +193,18 @@
 
 				/* Down side */
 				geometry.vertices.push(
-					new THREE.Vector3( 0, 0, 0),
-					new THREE.Vector3( 0, 0, -250 * scale),
-					new THREE.Vector3( (cols - 1) * feather_w, 0, -250 * scale),
-					new THREE.Vector3( (cols - 1) * feather_w, 0, 0)
+					new THREE.Vector3( 0 - x_offset, 0, 0 - z_offset),
+					new THREE.Vector3( 0 - x_offset, 0, -250 * scale - z_offset),
+					new THREE.Vector3( (cols - 1) * feather_w - x_offset, 0, -250 * scale - z_offset),
+					new THREE.Vector3( (cols - 1) * feather_w - x_offset, 0, 0 - z_offset)
 				);
 
 				geometry.faces.push( new THREE.Face3( 5 * cols + 5, 5 * cols + 1+ 5, 5 * cols + 2+ 5) )
 				geometry.faces[2 + (cols - 1) * 8 + 4].color.setHex( 0x222222 )
 				geometry.faces.push( new THREE.Face3( 5 * cols+ 5, 5 * cols + 2+ 5, 5 * cols + 3+ 5) )
 				geometry.faces[2 + (cols - 1) * 8 + 5].color.setHex( 0x222222 )
+
+				onWindowResize()
 			}
 
 			// EVENT HANDLERS
