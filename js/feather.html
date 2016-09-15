@@ -54,14 +54,17 @@
 
 			var feather_w = 60 * scale;
 			var cols = 15;
-			var rows = 6;
+			var rows = 4;
 			var geometry = new THREE.Geometry();
 
 			var planeMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: THREE.VertexColors, shading: THREE.FlatShading} );
-			var mesh = new THREE.Mesh( geometry, planeMaterial, shading === "glossy" );  // create an object
+			var mesh = new THREE.Mesh( geometry, planeMaterial, true );  // create an object
 
 			var cameraTarget = new THREE.Mesh( new THREE.CubeGeometry( feather_w * (cols - 1) / 2, -1000, -100));
+
 			var sock = new WebSocket("ws://localhost:9876/");
+
+			var pressure = new Array(cols * rows);
 
 			init();
 
@@ -82,17 +85,10 @@
 
 				// CAMERA
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 80000 );
-
-
-
 				camera.position.set( feather_w * cols / 2, 200, 200 );
-
-
-
 				cameraControls = new THREE.OrbitControls(camera);
 				cameraControls.target.set( feather_w * cols / 2, 0, -100 * scale );
 
-				//camera.updateProjectionMatrix()
 				// LIGHTS
 				ambientLight = new THREE.AmbientLight( 0x333333 );	// 0.2
 
@@ -118,6 +114,11 @@
 				scene.add( light );
 
 				/* PLANE INIT */
+				/* Initial pressure is zero */
+				for (i = 0; i < cols * rows; i++) {
+					pressure[i] = 0;
+				}
+
 				/* side of the wing */
 				geometry.vertices.push(
 					new THREE.Vector3( 0, 0, 0),
@@ -164,9 +165,11 @@
 				sock.onopen = function(e) { /* alert("opened"); */ }
 				sock.onclose = function(e) { /* alert("closed"); */ }
 				sock.onmessage = function(e) {
-					alert("got: " + e.data);
+					//alert("got: " + e.data.split(" ").map(Number));
 					/* Update fields */
-
+					var arr = e.data.split(" ").map(Number);
+					for (i = 0; i < cols * rows; i++)
+						pressure[i] = arr[i]
 				}
 
 				/* side of the wing */
@@ -223,17 +226,22 @@
 			};
 
 			function val_to_color(c) {
-				c = c % 256;
+				if (c > 255)
+					c = 255;
+				if (c < 0)
+					c = 0;
 				var d
 				if (c < 127) {
 					d = c * 2;
-					return d + (0xff - d) * 0x100;
+					return d * 0x100 + (0xff - d);
 				}
 
 				d = (c - 128) * 2;
-				if (d >= 256)
+				if (d >= 255)
 					d = 255;
-				return d * 0x100000 + (0xff - d) * 0x100;
+				if (d < 0)
+					d = 0;
+				return d * 0x10000 + (0xff - d) * 0x100;
 			}
 
 			var face_ind
@@ -241,63 +249,25 @@
 			var time_last = Date.now();
 			var time
 			function redrawPlane() {
-				face_ind = 3;
-
 				geometry.faces[0].color.setHex( 0x333333 )
 				geometry.faces[1].color.setHex( 0x333333 )
 				geometry.faces[2].color.setHex( 0x333333 )
 
 				time = Date.now();
 
-				if (line_ind > 15000)
-					line_ind = 0;
 				if (time > time_last + 500) {
 					time_last = time
+					face_ind = 3;
 					for (i = 1; i < cols; i++) {
-						line_ind++;
+						for (j = 0; j < rows; j++) {
+							color = val_to_color(pressure[(i - 1) * rows + j])
 
-						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
-						color = val_to_color(color)
+							geometry.faces[face_ind].color.setHex(color)
+							face_ind++
 
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
-						line_ind++;
-
-						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
-						color = val_to_color(color)
-
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
-						line_ind++;
-
-						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
-						color = val_to_color(color)
-
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
-						line_ind++;
-
-						color = raw_lines[line_ind] * 0x100 + raw_lines[line_ind] + raw_lines[line_ind] * 0x10000;
-						color = val_to_color(color)
-
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
-						geometry.faces[face_ind].color.setHex(color)
-						face_ind++
-
+							geometry.faces[face_ind].color.setHex(color)
+							face_ind++
+						}
 					}
 					geometry.colorsNeedUpdate = true;
 				}
