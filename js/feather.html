@@ -62,7 +62,7 @@
 
 			var cameraTarget = new THREE.Mesh( new THREE.CubeGeometry( feather_w * (cols - 1) / 2, -1000, -100));
 
-			var sock = new WebSocket("ws://localhost:9876/");
+			var sock = new WebSocket("ws://5.101.127.36:9876/");
 
 			var pressure = new Array(cols * rows);
 
@@ -235,6 +235,20 @@
 					c = 255;
 				if (c < 0)
 					c = 0;
+
+                                c = 1.0 * c / 255.0;
+                                c = c + 0.1;
+                                scale = 10.0;
+                                c = (1.0 + Math.atan (scale * (c - 0.5)) / Math.atan(scale / 2)) / 2;
+                                c = c * 255;
+
+                                c = Math.round(c)
+                                if (c > 255)
+					c = 255;
+				if (c < 0)
+					c = 0;
+
+
 				var d
 				if (c < 127) {
 					d = c * 2;
@@ -260,7 +274,7 @@
 
 				time = Date.now();
 
-				if (time > time_last + 500) {
+				if (time > time_last + 250) {
 					time_last = time
 					face_ind = 3;
 					for (i = 1; i < cols; i++) {
