@@ -17,19 +17,25 @@ angle = []
 cols = 15
 rows = 4
 
-wave_count = 3
-#wave_mean = [(0., 0.)] * wave_count
-wave_strength = [1.] * wave_count
-wave_mean = [[0.2, 0.], [2.4, 4.6], [1.1, 10.2]]
+class Wave:
+    count = 3
+    def __init__(self):
+        self.mean = [randint(0, rows), randint(0, cols)]
+        self.strength = 1.
 
-def wave_value(k):
-    return wave_strength[k]
+waves = []
+
+for i in range(0, Wave.count):
+    waves.append(Wave())
+
+def wave_value(w):
+    return w.strength
 
 def dist(a, b):
     return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
-def wave_pressure(pt, k):
-    return 225. * wave_value(k) * math.exp(-0.5 * (dist(pt, wave_mean[k])))
+def wave_pressure(pt, w):
+    return 225. * wave_value(w) * math.exp(-0.5 * (dist(pt, w.mean)))
 
 for i in range(0, rows):
     p.append([])
@@ -58,22 +64,20 @@ while 1:
     #continue;
     sleep(0.01)
 
-    for k in range(0, wave_count):
-        #wave_mean[k][0] = 0.
-        wave_mean[k][0] += 0.01 * (randint(0, 10) - 5)
-        wave_mean[k][1] += 0.01 * (randint(0, 10) - 5)
-        wave_mean[k][0] = limit_val(wave_mean[k][0], -1, rows + 1);
-        wave_mean[k][1] = limit_val(wave_mean[k][1], -1, cols + 1);
+    for w in waves:
+        w.mean[0] += 0.01 * (randint(0, 10) - 5)
+        w.mean[1] += 0.01 * (randint(0, 10) - 5)
+        w.mean[0] = limit_val(w.mean[0], -1, rows + 1);
+        w.mean[1] = limit_val(w.mean[1], -1, cols + 1);
 
-        wave_strength[k] += 0.01 * (randint(0, 10) - 4)
-        wave_strength[k] = limit_val(wave_strength[k], 0, 1.)
-
+        w.strength += 0.01 * (randint(0, 10) - 4)
+        w.strength = limit_val(w.strength, 0, 1.)
 
     for j in range(0, cols):
         for i in range(0, rows):
             p[i][j] = 0.
-            for k in range(0, wave_count):
-                p[i][j] += wave_pressure((i, j), k)
+            for w in waves:
+                p[i][j] += wave_pressure((i, j), w)
                 p[i][j] = limit_val(p[i][j], 0, 255)
 
             p[i][j] *= math.cos(angle[i][j])
