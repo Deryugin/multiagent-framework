@@ -1,27 +1,18 @@
 #!/usr/bin/python2
 
 """
-A simple echo server
+Supposed to be used with websocketd
 """
 from time import sleep
 from random import randint
 import math
 
-host = ''
-port = 50000
-backlog = 5
-size = 1024
-
-p = []
-angle = []
 cols = 15
 rows = 4
 
 def limit_val(val, inf, sup):
-    if (val > sup):
-        val = sup
-    if (val < inf):
-        val = inf
+    val = min(val, sup)
+    val = max(val, inf)
     return val
 
 class Wave:
@@ -39,52 +30,55 @@ class Wave:
 
         self.strength += self.walk_rate * (randint(0, 10) - 4)
         self.strength = limit_val(self.strength, 0., 1.)
+    def value(self):
+        # Could be mutable in future
+        return 1.
 
+class Feather:
+    alpha    = 0.
+    beta     = 0.
+    pressure = 0.
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+# Initialize waves
 waves = []
-
 for i in range(0, Wave.count):
     waves.append(Wave())
-
-def wave_value(w):
-    return w.strength
 
 def dist(a, b):
     return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
 def wave_pressure(pt, w):
-    return 225. * wave_value(w) * math.exp(-0.5 * (dist(pt, w.mean)))
+    return 225. * w.value() * math.exp(-0.5 * (dist(pt, w.mean)))
 
-for i in range(0, rows):
-    p.append([])
-    angle.append([])
-    for j in range(0, cols):
-        #p[i].append(0.0 + randint(0, 255))
-        p[i].append(0.0)
-        angle[i].append(0.)
+feathers = []
+
+for j in range(0, cols):
+    for i in range(0, rows):
+        feathers.append(Feather(i, j))
 
 r = 0
 
 while 1:
     out = ""
-    for j in range(0, cols):
-        for i in range(0, rows):
-           out += str(int(p[i][j])) + " "
-    #      print p[i][j]
+    for f in feathers:
+        out += str(int(f.pressure)) + " "
     print out
-    #continue;
     sleep(0.01)
 
     for w in waves:
         w.walk()
 
-    for j in range(0, cols):
-        for i in range(0, rows):
-            p[i][j] = 0.
+    for f in feathers:
+            p = 0
             for w in waves:
-                p[i][j] += wave_pressure((i, j), w)
-                limit_val(p[i][j], 0, 255)
+                p += wave_pressure((f.x, f.y), w)
+                limit_val(p, 0, 255)
 
-            p[i][j] *= math.cos(angle[i][j])
+            p *= math.cos(f.alpha)
+            f.pressure = p
 '''
     b = 0.005
 
