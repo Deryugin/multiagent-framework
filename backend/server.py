@@ -7,6 +7,8 @@ from time import sleep
 from random import randint
 import math
 
+import waves
+
 cols = 15
 rows = 4
 
@@ -15,25 +17,7 @@ def limit_val(val, inf, sup):
     val = max(val, inf)
     return val
 
-class Wave:
-    count     = 3
-    walk_rate = 0.01
-    def __init__(self):
-        self.mean = [randint(0, rows), randint(0, cols)]
-        self.strength = 1.
-    def walk(self):
-        self.mean[0] += self.walk_rate * (randint(0, 10) - 5)
-        self.mean[0] = limit_val(self.mean[0], -1, rows + 1)
-
-        self.mean[1] += self.walk_rate * (randint(0, 10) - 5)
-        self.mean[1] = limit_val(self.mean[1], -1, cols + 1)
-
-        self.strength += self.walk_rate * (randint(0, 10) - 4)
-        self.strength = limit_val(self.strength, 0., 1.)
-    def value(self):
-        # Could be mutable in future
-        return 1.
-
+# Agent description
 class Feather:
     alpha    = 0.
     beta     = 0.
@@ -42,24 +26,17 @@ class Feather:
         self.x = x
         self.y = y
 
-# Initialize waves
-waves = []
-for i in range(0, Wave.count):
-    waves.append(Wave())
-
-def dist(a, b):
-    return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
-
-def wave_pressure(pt, w):
-    return 225. * w.value() * math.exp(-0.5 * (dist(pt, w.mean)))
-
 feathers = []
 
 for j in range(0, cols):
     for i in range(0, rows):
         feathers.append(Feather(i, j))
 
-r = 0
+world_update   = waves.waves_update
+world_pressure = waves.wave_pressure
+world_init     = waves.waves_init
+
+world_init(cols, rows)
 
 while 1:
     out = ""
@@ -68,17 +45,11 @@ while 1:
     print out
     sleep(0.01)
 
-    for w in waves:
-        w.walk()
+    world_update()
 
     for f in feathers:
-            p = 0
-            for w in waves:
-                p += wave_pressure((f.x, f.y), w)
-                limit_val(p, 0, 255)
-
-            p *= math.cos(f.alpha)
-            f.pressure = p
+        p = world_pressure(f.x, f.y)
+        f.pressure = limit_val(p * math.cos(f.alpha), 0, 255)
 '''
     b = 0.005
 
