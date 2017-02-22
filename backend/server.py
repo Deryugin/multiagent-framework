@@ -18,7 +18,7 @@ def limit_val(val, inf, sup):
     return val
 
 # Agent description
-alpha_lim = [0., math.pi / 4]
+alpha_lim = [0., math.pi / 2]
 beta_lim = [-math.pi / 2, math.pi / 2]
 
 class Feather:
@@ -29,27 +29,25 @@ class Feather:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-    def __getitem__(self, a): #XXX
-        return self
 
 feathers = []
 
-for j in range(0, cols):
-    for i in range(0, rows):
-        feathers.append(Feather(i, j))
+for i in range(0, cols):
+    tmp = []
+    for j in range(0, rows):
+        tmp.append(Feather(i, j))
+    feathers.append(tmp)
 
-def neighbours(row, col):
+def neighbours(col, row):
     res = []
-
-    if (row > 1):
-        res.append(feathers[row - 1][col])
     if (col > 1):
-        res.append(feathers[row][col - 1])
-    if (row < rows - 1):
-        res.append(feathers[row + 1][col])
+        res.append(feathers[col - 1][row])
+    if (row > 1):
+        res.append(feathers[col][row - 1])
     if (col < cols - 1):
-        res.append(feathers[row][col + 1])
-
+        res.append(feathers[col + 1][row])
+    if (row < rows - 1):
+        res.append(feathers[col][row + 1])
     return res
 
 world_update   = waves.waves_update
@@ -60,37 +58,50 @@ world_init(cols, rows)
 
 while 1:
     out = ""
-    for f in feathers:
-        out += str(int(f.pressure)) + " "
+    for l in feathers:
+        for f in l:
+            out += str(int(limit_val(f.pressure, 0, 255))) + " "
     print out
     sleep(0.01)
 
     world_update()
 
-    for f in feathers:
-        f.pressure = 0
-        for p in world_pressure(f.x, f.y): # list of 3d-vectors
-            # If scalar product of the pressure vector and the
-            # normal to the feather is negative then this wind
-            # flow do not affect this side of the feather
-            n = [math.cos(f.beta), math.sin(f.beta), math.cos(f.alpha)]
-            s = p[0] * n[0] + p[1] * n[1] + p[2] * n[2]
-            if s > 0 and math.cos(f.alpha) != 0:
-                f.pressure += s / abs(math.cos(f.alpha))
-                #f.pressure += s / math.sqrt(n[0]** 2 + n[1] ** 2 + n[2] ** 2)
+    for l in feathers:
+        for f in l:
+            f.pressure = 0
+            for p in world_pressure(f.x, f.y): # list of 3d-vectors
+                p[0] = 0
+                p[1] = 0
+                # If scalar product of the pressure vector and the
+                # normal to the feather is negative then this wind
+                # flow do not affect this side of the feather
+                n = [math.cos(f.beta), math.sin(f.beta), math.cos(f.alpha)]
+                s = p[0] * n[0] + p[1] * n[1] + p[2] * n[2]
+                if s > 0 and math.cos(f.alpha) != 0:
+                    f.pressure += p[2] * math.cos(f.alpha)#s / abs(math.cos(f.alpha))
+                    #f.pressure += s / math.sqrt(n[0]** 2 + n[1] ** 2 + n[2] ** 2)
 
-        f.pressure = limit_val(f.pressure, 0, 255)
 
-    b = 0.005
+    b = 0.5
     gamma = 0.1
-    for i in range(0, rows):
-        for j in range(0, cols):
+    for i in range(0, cols):
+        for j in range(0, rows):
             weighted_diff = 0.
+            #print "My val: " + str(f.pressure)
             for h in neighbours(i, j):
+                #print "neigh: " + str(h.pressure)
                 weighted_diff += b * (h.pressure - feathers[i][j].pressure)
             alpha = feathers[i][j].alpha
 
-            diff = gamma * (weighted_diff - math.tan(alpha) * (1.)) / (1)
+            if (weighted_diff > 0):
+                alpha -= 0.01
+            else:
+                alpha += 0.01
+
+            feathers[i][j].alpha = limit_val(alpha, alpha_lim[0], alpha_lim[1])
+
+            #f.pressure = limit_val(f.pressure, 0, 255)
+            #diff = gamma * (weighted_diff - math.tan(alpha) * (1.)) / (1)
 
 #    for i in range(0, rows):
 #        for j in range(0, cols):
