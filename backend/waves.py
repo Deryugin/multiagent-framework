@@ -10,11 +10,11 @@ cols = 0
 rows = 0
 
 class Wave:
-    count     = 3
+    count     = 4
     walk_rate = 0.001
     def __init__(self):
-        self.mean = [0, 0]
-        #self.mean = [randint(0, cols), randint(0, rows)]
+        #self.mean = [0, 0]
+        self.mean = [randint(0, cols), randint(0, rows)]
         self.strength = 1.
     def walk(self):
         self.mean[0] += self.walk_rate * (randint(0, 10) - 5)
@@ -42,7 +42,7 @@ def dist(a, b):
     return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
 def wave_force(pt, w):
-    return 225. * w.value() * math.exp(-0.5 * (dist(pt, w.mean)))
+    return 850. / w.count * w.value() * math.exp(-0.5 * (dist(pt, w.mean)))
 
 def waves_update():
     for w in waves:

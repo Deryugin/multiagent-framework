@@ -6,10 +6,12 @@ Supposed to be used with websocketd
 from time import sleep
 from random import randint
 import math
-
+import random
 import waves
 
-cols = 15
+random.seed(68)
+
+cols = 14
 rows = 4
 
 def limit_val(val, inf, sup):
@@ -18,17 +20,23 @@ def limit_val(val, inf, sup):
     return val
 
 # Agent description
-alpha_lim = [0., math.pi / 2]
+#alpha_lim = [0., math.pi / 2]
+alpha_lim = [0., math.pi / 4]
 beta_lim = [-math.pi / 2, math.pi / 2]
 
 class Feather:
     alpha    = 0.
     beta     = 0.
     pressure = 0.
+
     pressure_prev = 0.
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        if cols % 2 == 0:
+            self.r = abs(x - cols / 2) + 0.5
+        else:
+            self.r = abs(x - cols / 2)
 
 feathers = []
 
@@ -68,22 +76,28 @@ while 1:
 
     for l in feathers:
         for f in l:
+            f.pressure_prev = f.pressure
+
+    for l in feathers:
+        for f in l:
             f.pressure = 0
             for p in world_pressure(f.x, f.y): # list of 3d-vectors
-                p[0] = 0
-                p[1] = 0
+                f.pressure += p[2]
+                continue
+                #p[0] = 0
+                #p[1] = 0
                 # If scalar product of the pressure vector and the
                 # normal to the feather is negative then this wind
                 # flow do not affect this side of the feather
                 n = [math.cos(f.beta), math.sin(f.beta), math.cos(f.alpha)]
                 s = p[0] * n[0] + p[1] * n[1] + p[2] * n[2]
                 if s > 0 and math.cos(f.alpha) != 0:
-                    f.pressure += p[2] * math.cos(f.alpha)#s / abs(math.cos(f.alpha))
+                    f.pressure += p[2] * math.cos(f.alpha) + p[1] * math.sin(f.alpha) + p[0] * math.sin(f.beta)#s / abs(math.cos(f.alpha))
                     #f.pressure += s / math.sqrt(n[0]** 2 + n[1] ** 2 + n[2] ** 2)
 
 
     b = 0.5
-    gamma = 0.1
+    gamma = .01
     for i in range(0, cols):
         for j in range(0, rows):
             weighted_diff = 0.
@@ -93,19 +107,23 @@ while 1:
                 weighted_diff += b * (h.pressure - feathers[i][j].pressure)
             alpha = feathers[i][j].alpha
 
-            if (weighted_diff > 0):
-                alpha -= 0.01
-            else:
-                alpha += 0.01
+            f = limit_val(feathers[i][j].pressure, 0.01, 1024)
+            f_prev = limit_val(feathers[i][j].pressure_prev, 0.01, 1024)
 
+            step = weighted_diff - math.tan(alpha) * (math.log(f) - math.log(f_prev))
+            if feathers[i][j].r > 0:
+                step /= feathers[i][j].r * f * math.cos(alpha)
+            alpha -= gamma * step
+            '''
+            if (weighted_diff > 0):
+                alpha -= gamma * step
+            else:
+                alpha += gamma * step
+            '''
             feathers[i][j].alpha = limit_val(alpha, alpha_lim[0], alpha_lim[1])
 
             #f.pressure = limit_val(f.pressure, 0, 255)
             #diff = gamma * (weighted_diff - math.tan(alpha) * (1.)) / (1)
-
-#    for i in range(0, rows):
-#        for j in range(0, cols):
-#            feathers[i][j].pressure_prev = feathers[i][j].pressure
 
 '''
     for i in range(0, rows):
