@@ -11,7 +11,7 @@ rows = 0
 
 class Wave:
     count     = 4
-    walk_rate = 0.001
+    walk_rate = 0.00#1
     def __init__(self):
         #self.mean = [0, 0]
         self.mean = [randint(0, cols), randint(0, rows)]
@@ -48,18 +48,20 @@ def waves_update():
     for w in waves:
         w.walk()
 
+laminar_wind = 045.
+
 def wave_pressure(f_x, f_y):
     res = []
     for w in waves:
         x = f_x - w.mean[0]
         y = f_y - w.mean[1]
-        z = wave_force((f_x, f_y), w)
+        z = wave_force((f_x, f_y), w) 
         length = math.sqrt(x**2 + y**2 + z**2) # Should be wave_force((x, y), w)
         if (length > 0):
             coef = z / length;
             x *= coef
             y *= coef
             z *= coef
-            res.append([x, y, z])
+            res.append([x, y + laminar_wind, z])
 
     return res

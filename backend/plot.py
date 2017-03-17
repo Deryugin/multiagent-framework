@@ -8,10 +8,11 @@ from random import randint
 import math
 import random
 import waves
+import sys
 
 import matplotlib.pyplot as plt
 
-random.seed(68)
+#random.seed(69)
 
 cols = 14
 rows = 4
@@ -23,7 +24,8 @@ def limit_val(val, inf, sup):
 
 # Agent description
 #alpha_lim = [0., math.pi / 2]
-alpha_mul = 4
+#alpha_mul = 4
+alpha_mul = float(sys.argv[1])
 alpha_lim = [0., math.pi / alpha_mul]
 beta_lim = [-math.pi / 2, math.pi / 2]
 
@@ -66,10 +68,11 @@ b = 0.5
 
 def moment1(x, y):
     f = feathers[x][y]
-#    return f.pressure
+    #return f.pressure
     return f.r * (f.pressure * math.cos(f.alpha))
 
 def moment2(x, y):
+    return 0
     f = feathers[x][y]
     #return f.r * (f.pressure * math.cos(f.alpha) * math.sin(f.beta))
     return f.r * f.pressure * math.sin(f.alpha)
@@ -92,8 +95,9 @@ world_init     = waves.waves_init
 world_init(cols, rows)
 res = []
 
-gamma = .001
-itnum = 10000
+#gamma = .01
+gamma = float(sys.argv[2])
+itnum = 5000
 for it in range(0, itnum):
     '''
     out = ""
@@ -155,7 +159,8 @@ for it in range(0, itnum):
             #f.pressure = limit_val(f.pressure, 0, 255)
             #diff = gamma * (weighted_diff - math.tan(alpha) * (1.)) / (1)
 
-    res.append(qual())
+    print qual()
+    #res.append(qual())
 
 '''
     for i in range(0, rows):
@@ -187,6 +192,7 @@ for it in range(0, itnum):
                 if (p[i][j] < 0):
                     p[i][j] = 0;
 '''
+'''
 plt.xlabel('Iteration')
 plt.ylabel('Quality')
 plt.plot(res)
@@ -195,3 +201,4 @@ plt.text(10,  900, r'$\alpha^+= \frac{\pi}{' + str(alpha_mul) + '}$ ')
 
 #plt.axis([0, itnum, 0, 1400])
 plt.show()
+'''
